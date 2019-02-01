@@ -1,15 +1,15 @@
 import time
 # import requests
-import csv
+# import csv
 import os
 import datetime
-from random import uniform
-from sys import argv
+# from random import uniform
+# from sys import argv
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.action_chains import ActionChains
+# from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 # from joblib import Parallel, delayed
