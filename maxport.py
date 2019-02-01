@@ -44,6 +44,22 @@ class element_has_css_class(object):
             return False
 
 
+# funcion que permite seleccionar por ID, con una espera adicional por si el elemnto aun no se ha cargado
+def selGetById(browser, id):
+    
+    WebDriverWait(browser, 10).until(
+        EC.presence_of_element_located((By.ID, id)))
+
+    try:
+        id_ele = browser.find_element_by_id(id)
+    except Exception as err:
+        # print()
+        raise LookupError("Error: No se ha podido encontrar el elemento con id={}\n{}".format(id,err))
+        
+
+    return id_ele
+
+
 def chromeTest():
 
     # time.sleep(uniform(0, 2))
@@ -80,44 +96,44 @@ def chromeTest():
     # browser.close()
     # return 1
 
-    try:
-        WebDriverWait(browser, 10).until(
-            EC.presence_of_element_located((By.ID, "j_username")))
-        # assert "Welcome to People Contract Map" in browser.page_source
-    except:
-        print("Error: La página de login no es la esperada o no se ha podido cargar.")
-        browser.close()
-        # return t_start, 'E'
-        # return None, None, None
+    # try:
+    #     WebDriverWait(browser, 10).until(
+    #         EC.presence_of_element_located((By.ID, "j_username")))
+    #     # assert "Welcome to People Contract Map" in browser.page_source
+    # except:
+    #     print("Error: La página de login no es la esperada o no se ha podido cargar.")
+    #     browser.close()
+    #     # return t_start, 'E'
+    #     # return None, None, None
 
-    input_user = browser.find_element_by_id("j_username")
+
+
+    input_user = selGetById(browser, "j_username")
     input_user.send_keys(creds['usuario'])
     time.sleep(tiempo_espera)
 
-    input_pass = browser.find_element_by_id("j_password")
+    input_pass = selGetById(browser, "j_password")
     input_pass.send_keys(creds['password'])
     time.sleep(tiempo_espera)
 
     input_user.submit()
     time.sleep(tiempo_espera*3)
 
-    welcome_msg = browser.find_element_by_id("txtappname")
+    welcome_msg = selGetById(browser, "txtappname")
 
-    print(welcome_msg.text)
+    print("Mensaje de bienvenida: {}".format(welcome_msg.text))
 
-    WebDriverWait(browser, 10).until(
-        EC.presence_of_element_located((By.ID, "mx228")))
 
-    listado_cambios = browser.find_element_by_id("mx228")
+    listado_cambios = selGetById(browser, "mx228")
 
     listado_cambios.click()
     time.sleep(tiempo_espera*3)
 
-    input_estado = browser.find_element_by_id("mx781")
+    input_estado = selGetById(browser, "mx781")
     time.sleep(tiempo_espera*3)
     input_estado.send_keys(filtro_estado)
 
-    input_inicio_programado = browser.find_element_by_id("mx721")
+    input_inicio_programado = selGetById(browser, "mx721")
     time.sleep(tiempo_espera*3)
     input_inicio_programado.send_keys(filtrar_hasta)
 
@@ -125,17 +141,15 @@ def chromeTest():
 
     input_estado.send_keys(Keys.ENTER)
     time.sleep(tiempo_espera*10)
-    WebDriverWait(browser, 10).until(
-        EC.presence_of_element_located((By.ID, "mx260")))
 
-    num_resultados = browser.find_element_by_id("mx257").text.split(" ")[-1]
+
+    num_resultados = selGetById(browser, "mx257").text.split(" ")[-1]
 
     print("Núm de resultados después de filtrar: {}".format(num_resultados))
 
-    boton_descarga = browser.find_element_by_id("mx260")
+    boton_descarga = selGetById(browser, "mx260")
     boton_descarga.click()
     time.sleep(tiempo_espera*4)
-
 
     browser.close()
 
