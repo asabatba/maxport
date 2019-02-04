@@ -43,22 +43,30 @@ class element_has_css_class(object):
         else:
             return False
 
+# funcion que espera a que se cargue la pagina (desaparezca el indicador de espera)
+def esperar_carga(browser):
+    time.sleep(0.5)
+    WebDriverWait(browser, 20).until( EC.invisibility_of_element_located((By.ID, 'wait')))
+
 
 # funcion que permite seleccionar por ID, con una espera adicional por si el elemnto aun no se ha cargado
 def selGetById(browser, id):
-    
+
+    # se espera a que desaparezca el elemento DOM "wait"
+    esperar_carga(browser)
+
     WebDriverWait(browser, 10).until(
         EC.presence_of_element_located((By.ID, id)))
+
 
     try:
         id_ele = browser.find_element_by_id(id)
     except Exception as err:
         # print()
-        raise LookupError("Error: No se ha podido encontrar el elemento con id={}\n{}".format(id,err))
-        
+        raise LookupError(
+            "Error: No se ha podido encontrar el elemento con id={}\n{}".format(id, err))
 
     return id_ele
-
 
 def chromeTest():
 
@@ -71,8 +79,18 @@ def chromeTest():
 
     tiempo_espera = 0.5
 
-    filtrar_hasta = ( datetime.datetime.today()+datetime.timedelta(days=12, hours=6) ).strftime("<%d/%m/%Y %H:%M:%S")
+    dias_adelante = 12
 
+    num_reintentos = 3
+
+    filtrar_hasta = (datetime.datetime.today(
+    )+datetime.timedelta(days=dias_adelante, hours=6)).strftime("<%d/%m/%Y %H:%M:%S")
+
+    # filtro para cambios que sean actuales
+    filtrar_desde = (datetime.datetime.today() -
+                     datetime.timedelta(hours=12)).strftime(">%d/%m/%Y %H:%M:%S")
+
+    # filtro_tiempo = ">{} AND <{}".format(filtrar_desde, filtrar_hasta)
 
     options = Options()
     # options.headless = True # si se comenta esta linea, Chrome es visible durante la ejecucion
@@ -106,59 +124,79 @@ def chromeTest():
     #     # return t_start, 'E'
     #     # return None, None, None
 
-
-
     input_user = selGetById(browser, "j_username")
     input_user.send_keys(creds['usuario'])
-    time.sleep(tiempo_espera)
+    # time.sleep(tiempo_espera)
+    esperar_carga(browser)
 
     input_pass = selGetById(browser, "j_password")
     input_pass.send_keys(creds['password'])
-    time.sleep(tiempo_espera)
+    # time.sleep(tiempo_espera)
+    esperar_carga(browser)
 
     input_user.submit()
-    time.sleep(tiempo_espera*3)
+    # time.sleep(tiempo_espera*3)
 
     welcome_msg = selGetById(browser, "txtappname")
 
     print("Mensaje de bienvenida: {}".format(welcome_msg.text))
 
-
     listado_cambios = selGetById(browser, "mx228")
 
     listado_cambios.click()
-    time.sleep(tiempo_espera*3)
+    # time.sleep(tiempo_espera*2)
+    esperar_carga(browser)
 
     input_estado = selGetById(browser, "mx781")
     time.sleep(tiempo_espera*3)
+    esperar_carga(browser)
     input_estado.send_keys(filtro_estado)
 
+    # filtro para inicio programado
     input_inicio_programado = selGetById(browser, "mx721")
     time.sleep(tiempo_espera*3)
+    esperar_carga(browser)
     input_inicio_programado.send_keys(filtrar_hasta)
 
     time.sleep(tiempo_espera)
+    
+    # filtro para finalizacion programada
+    input_inicio_programado = selGetById(browser, "mx733")
+    time.sleep(tiempo_espera*3)
+    esperar_carga(browser)
+    input_inicio_programado.send_keys(filtrar_desde)
+
+    # time.sleep(tiempo_espera)
+
+    # darle al enter
 
     input_estado.send_keys(Keys.ENTER)
-    time.sleep(tiempo_espera*10)
-
+    # time.sleep(tiempo_espera*10)
+    esperar_carga(browser)
 
     num_resultados = selGetById(browser, "mx257").text.split(" ")[-1]
 
     print("Núm de resultados después de filtrar: {}".format(num_resultados))
 
-    boton_descarga = selGetById(browser, "mx260")
-    boton_descarga.click()
-    time.sleep(tiempo_espera*4)
+    for i in range(num_reintentos):
+        try:
+            boton_descarga = selGetById(browser, "mx260")
+            boton_descarga.click()
+            
+        except:
+            print("Fallo {}, reintentando...".format(i+1))
+            time.sleep(tiempo_espera*4)
+
+        else:
+            break
+
+    time.sleep(tiempo_espera*10)
 
     browser.close()
 
     return 1
 
 
-
 if __name__ == '__main__':
 
     chromeTest()
-
-
