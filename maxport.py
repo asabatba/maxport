@@ -44,9 +44,12 @@ class element_has_css_class(object):
             return False
 
 # funcion que espera a que se cargue la pagina (desaparezca el indicador de espera)
+
+
 def esperar_carga(browser):
     time.sleep(0.5)
-    WebDriverWait(browser, 20).until( EC.invisibility_of_element_located((By.ID, 'wait')))
+    WebDriverWait(browser, 20).until(
+        EC.invisibility_of_element_located((By.ID, 'wait')))
 
 
 # funcion que permite seleccionar por ID, con una espera adicional por si el elemnto aun no se ha cargado
@@ -58,7 +61,6 @@ def selGetById(browser, id):
     WebDriverWait(browser, 10).until(
         EC.presence_of_element_located((By.ID, id)))
 
-
     try:
         id_ele = browser.find_element_by_id(id)
     except Exception as err:
@@ -68,20 +70,69 @@ def selGetById(browser, id):
 
     return id_ele
 
+
+def isUsernameValid(username):
+    if (username[:3] != 'U01' and username[:3] != 'u01'):
+        print('El nombre de usuario es incorrecto (no empieza por U01)')
+        return 0
+
+    if (len(username) != 8):
+        print('El numero de caracteres del usuario no es el adecuado (deberian ser 8)')
+        return 0
+
+    return 1
+
+
+def isPasswordValid(password):
+    if (len(password) != 8):
+        print('La longitud del password no es la adecuada (deberia ser 8)')
+        return 0
+
+    return 1
+
+
+def createUserJson():
+
+    while True:
+        user = input('Introduce el nombre del usuario (U01): ')
+        if isUsernameValid(user):
+            break
+
+    while True:
+        password = input('Introduce la contraseña para el usuario indicado: ')
+        if isPasswordValid(password):
+            break
+
+    creds = {'usuario': user, 'password': password}
+
+    with open('user.json', 'w') as f:
+        json.dump(creds, f)
+    print('Se ha generado el archivo user.json con los datos de inicio de sesión.')
+
+    return creds
+
+
 def chromeTest():
 
-    # time.sleep(uniform(0, 2))
-
-    with open('user.json', 'r') as f:
-        creds = json.load(f)
-
+    # CONFIG #
     filtro_estado = "=ASSESS"
-
     tiempo_espera = 0.5
-
     dias_adelante = 12
-
     num_reintentos = 3
+    # /CONFIG #
+
+    try:
+        with open('user.json', 'r') as f:
+            creds = json.load(f)
+            print('Se ha cargado el usuario {}.'.format(creds['usuario']))
+            len(creds['password'])
+    except FileNotFoundError:
+        print('No se ha encontrado el fichero de configuración user.json, se procede a generar uno nuevo.')
+        creds = createUserJson()
+
+    except Exception:
+        print('Ha habido un problema decodificando el fichero user.json, se procede a generar uno nuevo.')
+        creds = createUserJson()
 
     filtrar_hasta = (datetime.datetime.today(
     )+datetime.timedelta(days=dias_adelante, hours=6)).strftime("<%d/%m/%Y %H:%M:%S")
@@ -101,15 +152,18 @@ def chromeTest():
         # "safebrowsing.enabled": True
     })
 
+    print('Se abre una versión controlada de Chrome.')
     browser = webdriver.Chrome(options=options)
     # browser.implicitly_wait(5)
 
     try:
         browser.get("https://maximo.lacaixa.es/")
     except Exception as err:
-        print('Problema de conexión con la url\n{}'.format(err))
+        # print()
         browser.close()
-        return 0
+        raise ConnectionError(
+            'Ha habido un problema abriendo el navegador en la url de Maximo\n\n{}'.format(err))
+        # return 0
         # return None, None, None
     # browser.close()
     # return 1
@@ -137,7 +191,12 @@ def chromeTest():
     input_user.submit()
     # time.sleep(tiempo_espera*3)
 
-    welcome_msg = selGetById(browser, "txtappname")
+    try:
+        welcome_msg = selGetById(browser, "txtappname")
+    except Exception as err:
+        browser.close()
+        raise ConnectionRefusedError(
+            'No se ha podido realizar login en Maximo. Es posible que los datos del usuario del fichero user.json sean incorrectos.\n{}'.format(err))
 
     print("Mensaje de bienvenida: {}".format(welcome_msg.text))
 
@@ -159,7 +218,7 @@ def chromeTest():
     input_inicio_programado.send_keys(filtrar_hasta)
 
     time.sleep(tiempo_espera)
-    
+
     # filtro para finalizacion programada
     input_inicio_programado = selGetById(browser, "mx733")
     time.sleep(tiempo_espera*3)
@@ -182,8 +241,8 @@ def chromeTest():
         try:
             boton_descarga = selGetById(browser, "mx260")
             boton_descarga.click()
-            
-        except:
+
+        except Exception:
             print("Fallo {}, reintentando...".format(i+1))
             time.sleep(tiempo_espera*4)
 
