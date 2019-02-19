@@ -55,8 +55,11 @@ def esperar_carga(browser):
 # funcion que permite seleccionar por ID, con una espera adicional por si el elemnto aun no se ha cargado
 def selGetById(browser, id):
 
+    tiempo_corto = 0.2
+
     # se espera a que desaparezca el elemento DOM "wait"
     esperar_carga(browser)
+    time.sleep(tiempo_corto)
 
     WebDriverWait(browser, 10).until(
         EC.presence_of_element_located((By.ID, id)))
@@ -116,7 +119,8 @@ def chromeTest():
 
     # CONFIG #
     filtro_estado = "=ASSESS"
-    tiempo_espera = 0.5
+    tiempo_espera = 0.6
+    
     dias_adelante = 12
     num_reintentos = 3
     # /CONFIG #
